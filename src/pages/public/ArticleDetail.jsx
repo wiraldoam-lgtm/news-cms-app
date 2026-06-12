@@ -67,11 +67,11 @@ export default function ArticleDetail() {
         <div className="row g-5">
           <article className="col-lg-8">
             <p className="lead">{article.excerpt}</p>
-            <p>{article.content}</p>
-            <p>
-              Redaksi memprioritaskan akurasi, konteks, dan dampak publik dalam setiap laporan.
-              Data artikel dapat dihubungkan langsung ke tabel Supabase untuk workflow produksi.
-            </p>
+            <div className="article-body">
+              {(article.content || '').split(/\n+/).filter(Boolean).map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
             <div className="d-flex gap-2 my-4">
               <button className="btn btn-brand" onClick={onFavorite}>{isFavorite ? 'Hapus Favorit' : 'Simpan Favorit'}</button>
               <button className="btn btn-outline-secondary" onClick={onLike}>

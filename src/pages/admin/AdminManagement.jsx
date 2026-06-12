@@ -14,7 +14,7 @@ const localSections = {
 
 function createConfig(section, content) {
   const configs = {
-    berita: { title: 'Kelola Berita', columns: ['Judul', 'Kategori', 'Penulis'], rows: content.articles.map((item) => [item.title, item.category, item.author]), ids: content.articles.map((item) => item.id) },
+    berita: { title: 'Kelola Berita', columns: ['Judul', 'Kategori', 'Penulis', 'Status'], rows: content.articles.map((item) => [item.title, item.category, item.author, item.status || 'Published']), ids: content.articles.map((item) => item.id) },
     kategori: { title: 'Kelola Kategori', columns: ['Nama Kategori', 'Status'], rows: content.categories.map((item) => [item, 'Aktif']) },
     wartawan: { title: 'Kelola Wartawan', columns: ['Nama', 'Desk', 'Artikel'], rows: content.journalists.map((item) => [item.name, item.beat, item.articles]), ids: content.journalists.map((item) => item.id) },
     komentar: { title: 'Kelola Komentar', columns: ['Artikel', 'Member', 'Status'], rows: content.comments.map((item) => [item.article, item.member, item.status]), ids: content.comments.map((item) => item.id) },
@@ -58,14 +58,74 @@ export default function AdminManagement() {
     return value;
   };
 
+  const showArticleForm = async (title, article = {}) => {
+    const categories = content.categories.map((category) => (
+      `<option value="${category}" ${article.category === category ? 'selected' : ''}>${category}</option>`
+    )).join('');
+    const { value } = await Swal.fire({
+      title,
+      width: 760,
+      html: `
+        <div class="swal-news-form">
+          <input id="article-title" class="swal2-input" placeholder="Judul berita" value="${article.title || ''}">
+          <div class="swal-news-grid">
+            <select id="article-category" class="swal2-input">${categories}</select>
+            <input id="article-author" class="swal2-input" placeholder="Penulis" value="${article.author || ''}">
+          </div>
+          <textarea id="article-excerpt" class="swal2-textarea" placeholder="Lead / ringkasan singkat">${article.excerpt || ''}</textarea>
+          <textarea id="article-content" class="swal2-textarea news-content-input" placeholder="Isi berita lengkap. Pisahkan paragraf dengan baris baru.">${article.content || ''}</textarea>
+          <input id="article-image" class="swal2-input" placeholder="URL thumbnail" value="${article.image || ''}">
+          <div class="swal-news-grid">
+            <select id="article-status" class="swal2-input">
+              <option value="Published" ${(article.status || 'Published') === 'Published' ? 'selected' : ''}>Published</option>
+              <option value="Draft" ${article.status === 'Draft' ? 'selected' : ''}>Draft</option>
+            </select>
+            <select id="article-flags" class="swal2-input">
+              <option value="normal">Normal</option>
+              <option value="trending" ${article.trending ? 'selected' : ''}>Trending</option>
+              <option value="popular" ${article.popular ? 'selected' : ''}>Populer</option>
+              <option value="both" ${article.trending && article.popular ? 'selected' : ''}>Trending + Populer</option>
+            </select>
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Simpan Berita',
+      cancelButtonText: 'Batal',
+      preConfirm: () => {
+        const flags = document.getElementById('article-flags').value;
+        return {
+          title: document.getElementById('article-title').value.trim(),
+          category: document.getElementById('article-category').value,
+          author: document.getElementById('article-author').value.trim(),
+          excerpt: document.getElementById('article-excerpt').value.trim(),
+          content: document.getElementById('article-content').value.trim(),
+          image: document.getElementById('article-image').value.trim(),
+          status: document.getElementById('article-status').value,
+          trending: flags === 'trending' || flags === 'both',
+          popular: flags === 'popular' || flags === 'both',
+        };
+      },
+    });
+
+    if (!value) return null;
+    if (!value.title || !value.category || !value.author || !value.excerpt || !value.content) {
+      await Swal.fire('Data belum lengkap', 'Judul, kategori, penulis, ringkasan, dan isi berita wajib diisi.', 'warning');
+      return null;
+    }
+    return value;
+  };
+
   const handleCreate = async () => {
-    const value = await showRowForm(`Tambah ${config.title}`);
-    if (!value) return;
     if (section === 'berita') {
-      content.createArticle({ title: value[0], category: value[1], author: value[2], trending: false, popular: false });
-      await Swal.fire('Berhasil', 'Berita baru muncul di halaman utama.', 'success');
+      const article = await showArticleForm('Tambah Berita');
+      if (!article) return;
+      content.createArticle(article);
+      await Swal.fire('Berhasil', 'Berita baru berhasil dipublikasikan.', 'success');
       return;
     }
+    const value = await showRowForm(`Tambah ${config.title}`);
+    if (!value) return;
     if (section === 'kategori') {
       content.setCollection('categories', (current) => [value[0], ...current]);
       content.recordActivity(`Admin menambahkan kategori: ${value[0]}`, 'admin');
@@ -102,14 +162,17 @@ export default function AdminManagement() {
   };
 
   const handleEdit = async (rowIndex) => {
-    const value = await showRowForm(`Edit ${config.title}`, rows[rowIndex]);
-    if (!value) return;
     const id = config.ids?.[rowIndex];
     if (section === 'berita') {
-      content.updateArticle(id, { title: value[0], category: value[1], author: value[2] });
-      await Swal.fire('Berhasil', 'Perubahan berita muncul di halaman utama.', 'success');
+      const currentArticle = content.articles.find((article) => article.id === id);
+      const article = await showArticleForm('Edit Berita', currentArticle);
+      if (!article) return;
+      content.updateArticle(id, article);
+      await Swal.fire('Berhasil', 'Berita berhasil diperbarui.', 'success');
       return;
     }
+    const value = await showRowForm(`Edit ${config.title}`, rows[rowIndex]);
+    if (!value) return;
     if (section === 'trending') {
       content.updateArticle(id, { title: value[0], category: value[1], trending: value[2].toLowerCase() === 'ya' });
       await Swal.fire('Berhasil', 'Status trending diperbarui di halaman utama.', 'success');

@@ -8,7 +8,7 @@ import { useContent } from '../../lib/content';
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 export default function JournalistDashboard() {
-  const { articles, comments, createArticle, updateArticle, deleteArticle, setCollection, recordActivity } = useContent();
+  const { articles, categories, comments, createArticle, updateArticle, deleteArticle, setCollection, recordActivity } = useContent();
   const [moderationQueue, setModerationQueue] = useState(comments);
   const myArticles = articles;
 
@@ -24,28 +24,47 @@ export default function JournalistDashboard() {
   const totalViews = useMemo(() => myArticles.reduce((total, article) => total + article.views, 0), [myArticles]);
 
   const showArticleForm = async (title, article = {}) => {
+    const categoryOptions = categories.map((category) => (
+      `<option value="${category}" ${article.category === category ? 'selected' : ''}>${category}</option>`
+    )).join('');
     const { value } = await Swal.fire({
       title,
+      width: 760,
       html: `
-        <input id="title" class="swal2-input" placeholder="Judul" value="${article.title || ''}">
-        <input id="category" class="swal2-input" placeholder="Kategori" value="${article.category || ''}">
-        <input id="excerpt" class="swal2-input" placeholder="Ringkasan" value="${article.excerpt || ''}">
-        <input id="thumbnail" class="swal2-input" placeholder="URL Thumbnail" value="${article.image || ''}">
+        <div class="swal-news-form">
+          <input id="title" class="swal2-input" placeholder="Judul berita" value="${article.title || ''}">
+          <select id="category" class="swal2-input">${categoryOptions}</select>
+          <textarea id="excerpt" class="swal2-textarea" placeholder="Lead / ringkasan singkat">${article.excerpt || ''}</textarea>
+          <textarea id="content" class="swal2-textarea news-content-input" placeholder="Isi berita lengkap. Pisahkan paragraf dengan baris baru.">${article.content || ''}</textarea>
+          <input id="thumbnail" class="swal2-input" placeholder="URL Thumbnail" value="${article.image || ''}">
+          <select id="flags" class="swal2-input">
+            <option value="normal">Normal</option>
+            <option value="trending" ${article.trending ? 'selected' : ''}>Trending</option>
+            <option value="popular" ${article.popular ? 'selected' : ''}>Populer</option>
+            <option value="both" ${article.trending && article.popular ? 'selected' : ''}>Trending + Populer</option>
+          </select>
+        </div>
       `,
       showCancelButton: true,
-      confirmButtonText: 'Simpan',
+      confirmButtonText: 'Simpan Berita',
       cancelButtonText: 'Batal',
-      preConfirm: () => ({
-        title: document.getElementById('title').value.trim(),
-        category: document.getElementById('category').value.trim(),
-        excerpt: document.getElementById('excerpt').value.trim(),
-        image: document.getElementById('thumbnail').value.trim(),
-      }),
+      preConfirm: () => {
+        const flags = document.getElementById('flags').value;
+        return {
+          title: document.getElementById('title').value.trim(),
+          category: document.getElementById('category').value,
+          excerpt: document.getElementById('excerpt').value.trim(),
+          content: document.getElementById('content').value.trim(),
+          image: document.getElementById('thumbnail').value.trim(),
+          trending: flags === 'trending' || flags === 'both',
+          popular: flags === 'popular' || flags === 'both',
+        };
+      },
     });
 
     if (!value) return null;
-    if (!value.title || !value.category || !value.excerpt) {
-      await Swal.fire('Data belum lengkap', 'Judul, kategori, dan ringkasan wajib diisi.', 'warning');
+    if (!value.title || !value.category || !value.excerpt || !value.content) {
+      await Swal.fire('Data belum lengkap', 'Judul, kategori, ringkasan, dan isi berita wajib diisi.', 'warning');
       return null;
     }
     return value;
@@ -57,12 +76,9 @@ export default function JournalistDashboard() {
     createArticle({
       author: 'Raka Pradana',
       date: 'Draft baru',
-      content: value.excerpt,
       views: 0,
       likes: 0,
       comments: 0,
-      trending: false,
-      popular: false,
       image: value.image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80',
       ...value,
     });

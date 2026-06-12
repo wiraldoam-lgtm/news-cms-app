@@ -156,6 +156,34 @@ a {
   font-size: .875rem;
 }
 
+.article-body p {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  margin-bottom: 1.25rem;
+}
+
+.swal-news-form {
+  display: grid;
+  gap: .75rem;
+  text-align: left;
+}
+
+.swal-news-form .swal2-input,
+.swal-news-form .swal2-textarea {
+  margin: 0;
+  width: 100%;
+}
+
+.swal-news-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.news-content-input {
+  min-height: 190px;
+}
+
 .filter-bar {
   display: grid;
   grid-template-columns: 1fr 220px;
