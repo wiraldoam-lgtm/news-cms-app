@@ -11,6 +11,7 @@ const initialContent = {
   journalists,
   banners,
   ads,
+  activities: [],
 };
 
 const ContentContext = createContext(null);
@@ -46,6 +47,15 @@ export function ContentProvider({ children }) {
     }));
   };
 
+  const recordActivity = (message, type = 'info') => {
+    setCollection('activities', (current = []) => [{
+      id: Date.now(),
+      message,
+      type,
+      time: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+    }, ...current].slice(0, 12));
+  };
+
   const createArticle = (payload) => {
     const title = payload.title || 'Judul Baru';
     const article = {
@@ -64,20 +74,69 @@ export function ContentProvider({ children }) {
       popular: Boolean(payload.popular),
       image: payload.image || defaultImage,
     };
-    setCollection('articles', (current) => [article, ...current]);
+    setContent((current) => ({
+      ...current,
+      articles: [article, ...current.articles],
+      activities: [{
+        id: Date.now() + 1,
+        message: `Berita baru diterbitkan: ${article.title}`,
+        type: 'article',
+        time: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+      }, ...(current.activities || [])].slice(0, 12),
+    }));
     return article;
   };
 
   const updateArticle = (articleId, payload) => {
-    setCollection('articles', (current) => current.map((article) => (
-      article.id === articleId
-        ? { ...article, ...payload, slug: payload.title ? slugify(payload.title) : article.slug }
-        : article
-    )));
+    setContent((current) => {
+      const target = current.articles.find((article) => article.id === articleId);
+      return {
+        ...current,
+        articles: current.articles.map((article) => (
+          article.id === articleId
+            ? { ...article, ...payload, slug: payload.title ? slugify(payload.title) : article.slug }
+            : article
+        )),
+        activities: target ? [{
+          id: Date.now(),
+          message: `Berita diperbarui: ${payload.title || target.title}`,
+          type: 'article',
+          time: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+        }, ...(current.activities || [])].slice(0, 12) : current.activities,
+      };
+    });
   };
 
   const deleteArticle = (articleId) => {
-    setCollection('articles', (current) => current.filter((article) => article.id !== articleId));
+    setContent((current) => {
+      const target = current.articles.find((article) => article.id === articleId);
+      return {
+        ...current,
+        articles: current.articles.filter((article) => article.id !== articleId),
+        activities: target ? [{
+          id: Date.now(),
+          message: `Berita dihapus: ${target.title}`,
+          type: 'danger',
+          time: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+        }, ...(current.activities || [])].slice(0, 12) : current.activities,
+      };
+    });
+  };
+
+  const updateArticleCounters = (articleId, counters) => {
+    setContent((current) => ({
+      ...current,
+      articles: current.articles.map((article) => (
+        article.id === articleId
+          ? {
+              ...article,
+              likes: Math.max(0, Number(article.likes || 0) + Number(counters.likes || 0)),
+              comments: Math.max(0, Number(article.comments || 0) + Number(counters.comments || 0)),
+              popular: counters.likes > 0 ? true : article.popular,
+            }
+          : article
+      )),
+    }));
   };
 
   const value = useMemo(() => ({
@@ -86,6 +145,8 @@ export function ContentProvider({ children }) {
     createArticle,
     updateArticle,
     deleteArticle,
+    updateArticleCounters,
+    recordActivity,
     resetContent: () => setContent(initialContent),
   }), [content]);
 

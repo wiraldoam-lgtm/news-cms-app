@@ -13,7 +13,9 @@ export default function ArticleCard({ article, compact = false }) {
           <Link to={`/berita/${article.slug}`}>{article.title}</Link>
         </h2>
         {!compact && <p className="text-secondary mb-3">{article.excerpt}</p>}
-        <div className="small text-secondary">{article.author} - {article.views.toLocaleString('id-ID')} dibaca</div>
+        <div className="small text-secondary">
+          {article.author} - {article.views.toLocaleString('id-ID')} dibaca - {article.likes || 0} like - {article.comments || 0} komentar
+        </div>
       </div>
     </article>
   );

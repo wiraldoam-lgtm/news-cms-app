@@ -8,7 +8,7 @@ import { useContent } from '../../lib/content';
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 export default function JournalistDashboard() {
-  const { articles, comments, createArticle, updateArticle, deleteArticle, setCollection } = useContent();
+  const { articles, comments, createArticle, updateArticle, deleteArticle, setCollection, recordActivity } = useContent();
   const [moderationQueue, setModerationQueue] = useState(comments);
   const myArticles = articles;
 
@@ -99,6 +99,7 @@ export default function JournalistDashboard() {
     setCollection('comments', (currentComments) => currentComments.map((comment) => (
       comment.id === commentId ? { ...comment, status } : comment
     )));
+    recordActivity(`Wartawan memoderasi komentar menjadi ${status}.`, 'comment');
     await Swal.fire('Komentar diperbarui', `Status komentar menjadi ${status}.`, 'success');
   };
 

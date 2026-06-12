@@ -7,14 +7,14 @@ import { useContent } from '../../lib/content';
 
 export default function MemberDashboard() {
   const { user, setUser } = useAuth();
-  const { articles, comments, setCollection } = useContent();
+  const { articles, comments, setCollection, updateArticleCounters, recordActivity } = useContent();
   const [favoriteArticles, setFavoriteArticles] = useState(articles.slice(0, 2));
   const [myComments, setMyComments] = useState(comments);
   const [likedArticleIds, setLikedArticleIds] = useState([articles[0].id, articles[2].id]);
 
   const availableArticles = useMemo(() => (
     articles.filter((article) => !favoriteArticles.some((favorite) => favorite.id === article.id))
-  ), [favoriteArticles]);
+  ), [articles, favoriteArticles]);
 
   const handleUpdateProfile = async () => {
     const { value } = await Swal.fire({
@@ -38,6 +38,7 @@ export default function MemberDashboard() {
       return;
     }
     setUser((currentUser) => ({ ...currentUser, ...value }));
+    recordActivity(`Member memperbarui profil: ${value.name}`, 'member');
     await Swal.fire('Profil diperbarui', 'Perubahan profil demo tersimpan.', 'success');
   };
 
@@ -60,19 +61,25 @@ export default function MemberDashboard() {
     if (!value) return;
     const article = articles.find((item) => String(item.id) === String(value));
     setFavoriteArticles((currentArticles) => [article, ...currentArticles]);
+    recordActivity(`${user?.name || 'Member'} menyimpan favorit: ${article.title}`, 'member');
     await Swal.fire('Disimpan', 'Berita ditambahkan ke favorit.', 'success');
   };
 
   const handleRemoveFavorite = async (articleId) => {
+    const article = favoriteArticles.find((item) => item.id === articleId);
     setFavoriteArticles((currentArticles) => currentArticles.filter((article) => article.id !== articleId));
+    if (article) recordActivity(`${user?.name || 'Member'} menghapus favorit: ${article.title}`, 'member');
     await Swal.fire('Dihapus', 'Berita dihapus dari favorit.', 'success');
   };
 
   const handleToggleLike = async (articleId) => {
     const isLiked = likedArticleIds.includes(articleId);
+    const article = articles.find((item) => item.id === articleId);
     setLikedArticleIds((currentIds) => (
       isLiked ? currentIds.filter((id) => id !== articleId) : [articleId, ...currentIds]
     ));
+    updateArticleCounters(articleId, { likes: isLiked ? -1 : 1 });
+    if (article) recordActivity(`${user?.name || 'Member'} ${isLiked ? 'membatalkan like' : 'menyukai berita'}: ${article.title}`, 'member');
     await Swal.fire(isLiked ? 'Like dibatalkan' : 'Like tersimpan', 'Status like berhasil diperbarui.', 'success');
   };
 
@@ -94,6 +101,7 @@ export default function MemberDashboard() {
     setCollection('comments', (currentComments) => currentComments.map((item) => (
       item.id === commentId ? { ...item, body: value } : item
     )));
+    recordActivity(`${user?.name || 'Member'} mengedit komentar.`, 'comment');
     await Swal.fire('Komentar diperbarui', 'Riwayat komentar berhasil diubah.', 'success');
   };
 
@@ -108,6 +116,7 @@ export default function MemberDashboard() {
     if (!result.isConfirmed) return;
     setMyComments((currentComments) => currentComments.filter((comment) => comment.id !== commentId));
     setCollection('comments', (currentComments) => currentComments.filter((comment) => comment.id !== commentId));
+    recordActivity(`${user?.name || 'Member'} menghapus komentar.`, 'comment');
     await Swal.fire('Terhapus', 'Komentar dihapus dari riwayat.', 'success');
   };
 

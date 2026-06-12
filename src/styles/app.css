@@ -132,6 +132,30 @@ a {
   gap: .85rem;
 }
 
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: .85rem;
+}
+
+.activity-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.activity-item strong,
+.activity-item span {
+  display: block;
+}
+
+.activity-item span {
+  margin-top: .35rem;
+  color: var(--muted);
+  font-size: .875rem;
+}
+
 .filter-bar {
   display: grid;
   grid-template-columns: 1fr 220px;

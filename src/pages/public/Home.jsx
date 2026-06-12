@@ -3,7 +3,7 @@ import ArticleCard from '../../components/ArticleCard';
 import { useContent } from '../../lib/content';
 
 export default function Home() {
-  const { articles, categories } = useContent();
+  const { articles, categories, activities } = useContent();
   const [headline, ...latest] = articles;
   const trending = articles.filter((article) => article.trending);
   const popular = articles.filter((article) => article.popular);
@@ -29,6 +29,23 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="container py-4">
+        <div className="section-heading">
+          <div>
+            <span className="text-brand fw-semibold">Aktivitas CMS</span>
+            <h2>Perubahan terbaru dari admin, wartawan, dan member</h2>
+          </div>
+        </div>
+        <div className="activity-grid">
+          {(activities?.length ? activities : [{ id: 'empty', message: 'Belum ada perubahan baru.', time: 'Mode demo aktif' }]).slice(0, 4).map((activity) => (
+            <div className="activity-item" key={activity.id}>
+              <strong>{activity.message}</strong>
+              <span>{activity.time}</span>
+            </div>
+          ))}
         </div>
       </section>
 

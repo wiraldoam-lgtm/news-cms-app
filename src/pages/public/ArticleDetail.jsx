@@ -8,7 +8,7 @@ import { useContent } from '../../lib/content';
 export default function ArticleDetail() {
   const { slug } = useParams();
   const { user } = useAuth();
-  const { articles, comments, setCollection } = useContent();
+  const { articles, comments, setCollection, updateArticleCounters, recordActivity } = useContent();
   const { register, handleSubmit, reset } = useForm();
   const article = articles.find((item) => item.slug === slug) || articles[0];
   const [isFavorite, setIsFavorite] = useState(false);
@@ -27,6 +27,8 @@ export default function ArticleDetail() {
       body: values.comment,
       status: 'pending',
     }, ...currentComments]);
+    updateArticleCounters(article.id, { comments: 1 });
+    recordActivity(`Member mengirim komentar di berita: ${article.title}`, 'comment');
     reset();
     await Swal.fire('Komentar terkirim', 'Komentar masuk ke moderasi redaksi.', 'success');
   };
@@ -37,6 +39,7 @@ export default function ArticleDetail() {
       return;
     }
     setIsFavorite((currentValue) => !currentValue);
+    recordActivity(`${user.name || user.email} ${isFavorite ? 'menghapus favorit' : 'menyimpan favorit'}: ${article.title}`, 'member');
     await Swal.fire(isFavorite ? 'Dihapus' : 'Disimpan', isFavorite ? 'Berita dihapus dari favorit.' : 'Berita masuk ke favorit Anda.', 'success');
   };
 
@@ -46,6 +49,8 @@ export default function ArticleDetail() {
       return;
     }
     setIsLiked((currentValue) => !currentValue);
+    updateArticleCounters(article.id, { likes: isLiked ? -1 : 1 });
+    recordActivity(`${user.name || user.email} ${isLiked ? 'membatalkan like' : 'menyukai berita'}: ${article.title}`, 'member');
     await Swal.fire(isLiked ? 'Like dibatalkan' : 'Terima kasih', isLiked ? 'Like Anda dibatalkan.' : 'Like Anda tercatat.', 'success');
   };
 

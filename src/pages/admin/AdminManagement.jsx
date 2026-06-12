@@ -68,30 +68,36 @@ export default function AdminManagement() {
     }
     if (section === 'kategori') {
       content.setCollection('categories', (current) => [value[0], ...current]);
+      content.recordActivity(`Admin menambahkan kategori: ${value[0]}`, 'admin');
       await Swal.fire('Berhasil', 'Kategori baru muncul di halaman kategori dan filter berita.', 'success');
       return;
     }
     if (section === 'wartawan') {
       content.setCollection('journalists', (current) => [{ id: Date.now(), name: value[0], beat: value[1], articles: Number(value[2]) || 0, avatar: value[0].slice(0, 2).toUpperCase() }, ...current]);
+      content.recordActivity(`Admin menambahkan wartawan: ${value[0]}`, 'admin');
       await Swal.fire('Berhasil', 'Data wartawan berhasil ditambahkan.', 'success');
       return;
     }
     if (section === 'komentar') {
       content.setCollection('comments', (current) => [{ id: Date.now(), article: value[0], member: value[1], status: value[2], body: 'Komentar admin.' }, ...current]);
+      content.recordActivity(`Admin menambahkan komentar untuk: ${value[0]}`, 'admin');
       await Swal.fire('Berhasil', 'Komentar berhasil ditambahkan.', 'success');
       return;
     }
     if (section === 'banner') {
       content.setCollection('banners', (current) => [{ id: Date.now(), title: value[0], placement: value[1], active: value[2].toLowerCase() === 'aktif' }, ...current]);
+      content.recordActivity(`Admin menambahkan banner: ${value[0]}`, 'admin');
       await Swal.fire('Berhasil', 'Banner berhasil ditambahkan.', 'success');
       return;
     }
     if (section === 'iklan') {
       content.setCollection('ads', (current) => [{ id: Date.now(), brand: value[0], slot: value[1], status: value[2] }, ...current]);
+      content.recordActivity(`Admin menambahkan iklan: ${value[0]}`, 'admin');
       await Swal.fire('Berhasil', 'Iklan berhasil ditambahkan.', 'success');
       return;
     }
     setRows((currentRows) => [value, ...currentRows]);
+    content.recordActivity(`Admin menambahkan data di ${config.title}: ${value[0]}`, 'admin');
     await Swal.fire('Berhasil', 'Data baru berhasil ditambahkan.', 'success');
   };
 
@@ -135,6 +141,7 @@ export default function AdminManagement() {
       return;
     }
     setRows((currentRows) => currentRows.map((row, index) => (index === rowIndex ? value : row)));
+    content.recordActivity(`Admin memperbarui data di ${config.title}: ${value[0]}`, 'admin');
     await Swal.fire('Berhasil', 'Data berhasil diperbarui.', 'success');
   };
 
@@ -181,6 +188,7 @@ export default function AdminManagement() {
       return;
     }
     setRows((currentRows) => currentRows.filter((_, index) => index !== rowIndex));
+    content.recordActivity(`Admin menghapus data di ${config.title}.`, 'admin');
     await Swal.fire('Terhapus', 'Data berhasil dihapus dari daftar.', 'success');
   };
 
