@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 import { ads, articles, banners, categories, comments, journalists } from '../../data/mockData';
 
@@ -20,7 +21,62 @@ const sectionConfig = {
 
 export default function AdminManagement() {
   const { section } = useParams();
-  const config = sectionConfig[section] || sectionConfig.berita;
+  const config = useMemo(() => sectionConfig[section] || sectionConfig.berita, [section]);
+  const [rows, setRows] = useState(config.rows);
+
+  useEffect(() => {
+    setRows(config.rows);
+  }, [config]);
+
+  const showRowForm = async (title, initialValues = []) => {
+    const { value } = await Swal.fire({
+      title,
+      html: config.columns.map((column, index) => (
+        `<input id="field-${index}" class="swal2-input" placeholder="${column}" value="${initialValues[index] || ''}">`
+      )).join(''),
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Simpan',
+      cancelButtonText: 'Batal',
+      preConfirm: () => config.columns.map((_, index) => document.getElementById(`field-${index}`).value.trim()),
+    });
+
+    if (!value) return null;
+    if (value.some((item) => !item)) {
+      await Swal.fire('Data belum lengkap', 'Semua field wajib diisi.', 'warning');
+      return null;
+    }
+    return value;
+  };
+
+  const handleCreate = async () => {
+    const value = await showRowForm(`Tambah ${config.title}`);
+    if (!value) return;
+    setRows((currentRows) => [value, ...currentRows]);
+    await Swal.fire('Berhasil', 'Data baru berhasil ditambahkan.', 'success');
+  };
+
+  const handleEdit = async (rowIndex) => {
+    const value = await showRowForm(`Edit ${config.title}`, rows[rowIndex]);
+    if (!value) return;
+    setRows((currentRows) => currentRows.map((row, index) => (index === rowIndex ? value : row)));
+    await Swal.fire('Berhasil', 'Data berhasil diperbarui.', 'success');
+  };
+
+  const handleDelete = async (rowIndex) => {
+    const result = await Swal.fire({
+      title: 'Hapus data?',
+      text: rows[rowIndex].join(' - '),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, hapus',
+      cancelButtonText: 'Batal',
+    });
+
+    if (!result.isConfirmed) return;
+    setRows((currentRows) => currentRows.filter((_, index) => index !== rowIndex));
+    await Swal.fire('Terhapus', 'Data berhasil dihapus dari daftar.', 'success');
+  };
 
   return (
     <div>
@@ -30,7 +86,7 @@ export default function AdminManagement() {
           <h1>{config.title}</h1>
           <p className="text-secondary">CRUD, moderasi, dan laporan siap dihubungkan ke tabel Supabase.</p>
         </div>
-        <button className="btn btn-brand" onClick={() => Swal.fire('Form siap', 'Aksi tambah/edit demo berhasil dibuka.', 'success')}>
+        <button className="btn btn-brand" onClick={handleCreate}>
           Tambah Data
         </button>
       </div>
@@ -44,12 +100,12 @@ export default function AdminManagement() {
               </tr>
             </thead>
             <tbody>
-              {config.rows.map((row) => (
-                <tr key={row.join('-')}>
+              {rows.map((row, rowIndex) => (
+                <tr key={`${row.join('-')}-${rowIndex}`}>
                   {row.map((cell) => <td key={cell}>{cell}</td>)}
                   <td className="text-end">
-                    <button className="btn btn-sm btn-outline-secondary me-1">Edit</button>
-                    <button className="btn btn-sm btn-outline-danger">Hapus</button>
+                    <button className="btn btn-sm btn-outline-secondary me-1" onClick={() => handleEdit(rowIndex)}>Edit</button>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(rowIndex)}>Hapus</button>
                   </td>
                 </tr>
               ))}

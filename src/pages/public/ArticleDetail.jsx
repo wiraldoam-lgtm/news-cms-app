@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { useState } from 'react';
 import Swal from 'sweetalert2';
 import { useForm } from 'react-hook-form';
 import { articles, comments } from '../../data/mockData';
@@ -9,12 +10,22 @@ export default function ArticleDetail() {
   const { user } = useAuth();
   const { register, handleSubmit, reset } = useForm();
   const article = articles.find((item) => item.slug === slug) || articles[0];
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [articleComments, setArticleComments] = useState(comments);
 
-  const onComment = async () => {
+  const onComment = async (values) => {
     if (!user) {
       await Swal.fire('Login dibutuhkan', 'Silakan login member untuk berkomentar.', 'info');
       return;
     }
+    setArticleComments((currentComments) => [{
+      id: Date.now(),
+      article: article.title,
+      member: user.name || user.email,
+      body: values.comment,
+      status: 'pending',
+    }, ...currentComments]);
     reset();
     await Swal.fire('Komentar terkirim', 'Komentar masuk ke moderasi redaksi.', 'success');
   };
@@ -24,7 +35,17 @@ export default function ArticleDetail() {
       await Swal.fire('Login dibutuhkan', 'Silakan login member untuk menyimpan favorit.', 'info');
       return;
     }
-    await Swal.fire('Disimpan', 'Berita masuk ke favorit Anda.', 'success');
+    setIsFavorite((currentValue) => !currentValue);
+    await Swal.fire(isFavorite ? 'Dihapus' : 'Disimpan', isFavorite ? 'Berita dihapus dari favorit.' : 'Berita masuk ke favorit Anda.', 'success');
+  };
+
+  const onLike = async () => {
+    if (!user) {
+      await Swal.fire('Login dibutuhkan', 'Silakan login member untuk memberi like.', 'info');
+      return;
+    }
+    setIsLiked((currentValue) => !currentValue);
+    await Swal.fire(isLiked ? 'Like dibatalkan' : 'Terima kasih', isLiked ? 'Like Anda dibatalkan.' : 'Like Anda tercatat.', 'success');
   };
 
   return (
@@ -46,9 +67,9 @@ export default function ArticleDetail() {
               Data artikel dapat dihubungkan langsung ke tabel Supabase untuk workflow produksi.
             </p>
             <div className="d-flex gap-2 my-4">
-              <button className="btn btn-brand" onClick={onFavorite}>Simpan Favorit</button>
-              <button className="btn btn-outline-secondary" onClick={() => Swal.fire('Terima kasih', 'Like Anda tercatat.', 'success')}>
-                Like Berita
+              <button className="btn btn-brand" onClick={onFavorite}>{isFavorite ? 'Hapus Favorit' : 'Simpan Favorit'}</button>
+              <button className="btn btn-outline-secondary" onClick={onLike}>
+                {isLiked ? 'Batalkan Like' : 'Like Berita'}
               </button>
             </div>
             <section className="mt-5">
@@ -58,7 +79,7 @@ export default function ArticleDetail() {
                 <button className="btn btn-brand mt-3">Kirim Komentar</button>
               </form>
               <div className="mt-4">
-                {comments.map((comment) => (
+                {articleComments.map((comment) => (
                   <div className="comment-item" key={comment.id}>
                     <strong>{comment.member}</strong>
                     <p>{comment.body}</p>
