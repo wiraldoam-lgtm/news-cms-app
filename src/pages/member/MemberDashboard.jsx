@@ -2,11 +2,12 @@ import Swal from 'sweetalert2';
 import { useMemo, useState } from 'react';
 import ArticleCard from '../../components/ArticleCard';
 import StatCard from '../../components/StatCard';
-import { articles, comments } from '../../data/mockData';
 import { useAuth } from '../../lib/auth';
+import { useContent } from '../../lib/content';
 
 export default function MemberDashboard() {
   const { user, setUser } = useAuth();
+  const { articles, comments, setCollection } = useContent();
   const [favoriteArticles, setFavoriteArticles] = useState(articles.slice(0, 2));
   const [myComments, setMyComments] = useState(comments);
   const [likedArticleIds, setLikedArticleIds] = useState([articles[0].id, articles[2].id]);
@@ -90,6 +91,9 @@ export default function MemberDashboard() {
     setMyComments((currentComments) => currentComments.map((item) => (
       item.id === commentId ? { ...item, body: value } : item
     )));
+    setCollection('comments', (currentComments) => currentComments.map((item) => (
+      item.id === commentId ? { ...item, body: value } : item
+    )));
     await Swal.fire('Komentar diperbarui', 'Riwayat komentar berhasil diubah.', 'success');
   };
 
@@ -103,6 +107,7 @@ export default function MemberDashboard() {
     });
     if (!result.isConfirmed) return;
     setMyComments((currentComments) => currentComments.filter((comment) => comment.id !== commentId));
+    setCollection('comments', (currentComments) => currentComments.filter((comment) => comment.id !== commentId));
     await Swal.fire('Terhapus', 'Komentar dihapus dari riwayat.', 'success');
   };
 

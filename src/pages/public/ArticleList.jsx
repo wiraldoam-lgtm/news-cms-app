@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import ArticleCard from '../../components/ArticleCard';
-import { articles, categories } from '../../data/mockData';
+import { useContent } from '../../lib/content';
 
 export default function ArticleList() {
+  const { articles, categories } = useContent();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Semua');
 

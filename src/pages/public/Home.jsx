@@ -1,11 +1,16 @@
 import { Link } from 'react-router-dom';
 import ArticleCard from '../../components/ArticleCard';
-import { articles, categories } from '../../data/mockData';
+import { useContent } from '../../lib/content';
 
 export default function Home() {
+  const { articles, categories } = useContent();
   const [headline, ...latest] = articles;
   const trending = articles.filter((article) => article.trending);
   const popular = articles.filter((article) => article.popular);
+
+  if (!headline) {
+    return <main className="container py-5"><h1>Belum ada berita.</h1></main>;
+  }
 
   return (
     <main>

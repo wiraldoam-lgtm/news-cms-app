@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { categories } from '../../data/mockData';
+import { useContent } from '../../lib/content';
 
 export default function CategoryList() {
+  const { categories } = useContent();
   return (
     <main className="container py-5">
       <span className="text-brand fw-semibold">Daftar Kategori</span>

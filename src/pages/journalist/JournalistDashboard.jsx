@@ -1,15 +1,20 @@
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 import StatCard from '../../components/StatCard';
-import { articles, comments } from '../../data/mockData';
+import { useContent } from '../../lib/content';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 export default function JournalistDashboard() {
-  const [myArticles, setMyArticles] = useState(articles);
+  const { articles, comments, createArticle, updateArticle, deleteArticle, setCollection } = useContent();
   const [moderationQueue, setModerationQueue] = useState(comments);
+  const myArticles = articles;
+
+  useEffect(() => {
+    setModerationQueue(comments);
+  }, [comments]);
 
   const chartData = {
     labels: myArticles.map((article) => article.category),
@@ -49,9 +54,7 @@ export default function JournalistDashboard() {
   const handleCreate = async () => {
     const value = await showArticleForm('Tambah Berita');
     if (!value) return;
-    setMyArticles((currentArticles) => [{
-      id: Date.now(),
-      slug: value.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    createArticle({
       author: 'Raka Pradana',
       date: 'Draft baru',
       content: value.excerpt,
@@ -62,7 +65,7 @@ export default function JournalistDashboard() {
       popular: false,
       image: value.image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80',
       ...value,
-    }, ...currentArticles]);
+    });
     await Swal.fire('Berhasil', 'Draft berita berhasil dibuat.', 'success');
   };
 
@@ -70,7 +73,7 @@ export default function JournalistDashboard() {
     const article = myArticles.find((item) => item.id === articleId);
     const value = await showArticleForm('Edit Berita', article);
     if (!value) return;
-    setMyArticles((currentArticles) => currentArticles.map((item) => (item.id === articleId ? { ...item, ...value } : item)));
+    updateArticle(articleId, value);
     await Swal.fire('Berhasil', 'Artikel berhasil diperbarui.', 'success');
   };
 
@@ -85,12 +88,15 @@ export default function JournalistDashboard() {
       cancelButtonText: 'Batal',
     });
     if (!result.isConfirmed) return;
-    setMyArticles((currentArticles) => currentArticles.filter((item) => item.id !== articleId));
+    deleteArticle(articleId);
     await Swal.fire('Terhapus', 'Artikel berhasil dihapus dari daftar.', 'success');
   };
 
   const handleModerate = async (commentId, status) => {
     setModerationQueue((currentComments) => currentComments.map((comment) => (
+      comment.id === commentId ? { ...comment, status } : comment
+    )));
+    setCollection('comments', (currentComments) => currentComments.map((comment) => (
       comment.id === commentId ? { ...comment, status } : comment
     )));
     await Swal.fire('Komentar diperbarui', `Status komentar menjadi ${status}.`, 'success');

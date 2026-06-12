@@ -2,24 +2,25 @@ import { Link, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 import { useForm } from 'react-hook-form';
-import { articles, comments } from '../../data/mockData';
 import { useAuth } from '../../lib/auth';
+import { useContent } from '../../lib/content';
 
 export default function ArticleDetail() {
   const { slug } = useParams();
   const { user } = useAuth();
+  const { articles, comments, setCollection } = useContent();
   const { register, handleSubmit, reset } = useForm();
   const article = articles.find((item) => item.slug === slug) || articles[0];
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [articleComments, setArticleComments] = useState(comments);
+  const articleComments = comments.filter((comment) => comment.article === article.title || comment.status === 'approved');
 
   const onComment = async (values) => {
     if (!user) {
       await Swal.fire('Login dibutuhkan', 'Silakan login member untuk berkomentar.', 'info');
       return;
     }
-    setArticleComments((currentComments) => [{
+    setCollection('comments', (currentComments) => [{
       id: Date.now(),
       article: article.title,
       member: user.name || user.email,

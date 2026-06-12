@@ -1,11 +1,12 @@
 import { Doughnut, Line } from 'react-chartjs-2';
 import { ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import StatCard from '../../components/StatCard';
-import { articles, comments, journalists } from '../../data/mockData';
+import { useContent } from '../../lib/content';
 
 ChartJS.register(ArcElement, CategoryScale, Legend, LinearScale, LineElement, PointElement, Tooltip);
 
 export default function AdminDashboard() {
+  const { articles, comments, journalists } = useContent();
   const lineData = {
     labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
     datasets: [{ label: 'Pembaca', data: [1200, 1900, 1700, 2400, 3100, 2800, 3600], borderColor: '#0f766e', tension: 0.35 }],

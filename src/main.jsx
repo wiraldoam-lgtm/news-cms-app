@@ -6,12 +6,15 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './styles/app.css';
 import App from './App.jsx';
 import { AuthProvider } from './lib/auth.jsx';
+import { ContentProvider } from './lib/content.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <ContentProvider>
+          <App />
+        </ContentProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,

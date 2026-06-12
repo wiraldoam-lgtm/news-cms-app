@@ -1,9 +1,10 @@
 import { useParams } from 'react-router-dom';
-import { articles, journalists } from '../../data/mockData';
 import ArticleCard from '../../components/ArticleCard';
+import { useContent } from '../../lib/content';
 
 export default function JournalistProfile() {
   const { id } = useParams();
+  const { articles, journalists } = useContent();
   const journalist = journalists.find((item) => String(item.id) === id) || journalists[0];
   const authorArticles = articles.filter((article) => article.author === journalist.name);
 
